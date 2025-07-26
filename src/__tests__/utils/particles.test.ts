@@ -59,7 +59,7 @@ describe('ParticleSystem', () => {
       expect(uniqueAngles.size).toBeGreaterThan(4)
     })
 
-    it('should handle multiple death events', async () => {
+    it('should handle multiple death events', () => {
       particleSystem.addDeathParticles(100, 100, '#ff0000')
       expect((particleSystem as any).particles.size).toBe(8)
       

@@ -1,7 +1,7 @@
 {
   "name": "ant-colony-defense",
   "private": true,
-  "version": "1.3.0",
+  "version": "1.6.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -21,7 +21,7 @@
     "deploy": "node scripts/deploy-complete.js",
     "predeploy": "npm run version:bump:minor && npm run build",
     "deploy:major": "npm run version:bump:major && npm run build && npm run deploy",
-    "deploy:minor": "npm run version:bump:minor && npm run build && npm run deploy",  
+    "deploy:minor": "npm run version:bump:minor && npm run build && npm run deploy",
     "deploy:patch": "npm run version:bump:patch && npm run build && npm run deploy",
     "version:bump:major": "node scripts/version-bump.js major",
     "version:bump:minor": "node scripts/version-bump.js minor",
