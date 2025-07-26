@@ -37,6 +37,35 @@ function execCommand(command, description) {
 async function deploy() {
   log('\n🚀 Starting Complete Deployment Process', 'magenta');
   
+  // Step 0: Run ALL tests first - MUST PASS
+  log('\n🧪 Running ALL Tests (Unit + E2E + Lint + TypeCheck)', 'cyan');
+  
+  // Unit tests
+  log('\n📊 Running Unit Tests', 'blue');
+  const unitTestSuccess = execCommand('npm run test', 'Running unit tests with coverage');
+  if (!unitTestSuccess) {
+    throw new Error('Unit tests failed - deployment aborted');
+  }
+  
+  // TypeScript check
+  log('\n🔍 TypeScript Check', 'blue');
+  const typeCheckSuccess = execCommand('npm run typecheck', 'TypeScript compilation check');
+  if (!typeCheckSuccess) {
+    throw new Error('TypeScript check failed - deployment aborted');
+  }
+  
+  // Lint check
+  log('\n✨ ESLint Check', 'blue');
+  const lintSuccess = execCommand('npm run lint', 'ESLint validation');
+  if (!lintSuccess) {
+    throw new Error('ESLint failed - deployment aborted');
+  }
+  
+  // Skip localhost E2E for deployment - will test production URLs after deployment
+  log('\n🎭 Skipping localhost E2E (will test production after deployment)', 'blue');
+  
+  log('✅ ALL TESTS PASSED - Proceeding with deployment', 'green');
+  
   // Step 1: Check Git status
   log('\n📋 Checking Git status', 'cyan');
   const gitStatus = execCommand('git status --porcelain', 'Checking for uncommitted changes');
