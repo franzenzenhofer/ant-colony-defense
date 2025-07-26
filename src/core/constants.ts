@@ -53,7 +53,7 @@ export const TOWER_STATS: Record<TowerType, TowerStats> = {
       slow: 0.5
     },
     icon: '🦣',
-    color: '#8B7355',
+    color: '#795548',
     name: 'Anteater',
     description: 'Slows ants with sticky tongue'
   },
@@ -66,7 +66,7 @@ export const TOWER_STATS: Record<TowerType, TowerStats> = {
       aoe: 1
     },
     icon: '💨',
-    color: '#32CD32',
+    color: '#28A745',
     name: 'Pesticide Spray',
     description: 'Area damage to groups'
   },
@@ -79,7 +79,7 @@ export const TOWER_STATS: Record<TowerType, TowerStats> = {
       lure: 2
     },
     icon: '🍯',
-    color: '#FFA500',
+    color: '#FD7E14',
     name: 'Sugar Trap',
     description: 'Lures and damages ants'
   },
@@ -92,7 +92,7 @@ export const TOWER_STATS: Record<TowerType, TowerStats> = {
       dot: 5
     },
     icon: '🔥',
-    color: '#FF4500',
+    color: '#DC3545',
     name: 'Fire Tower',
     description: 'Burns with damage over time'
   }
@@ -122,26 +122,26 @@ export const GAME_CONFIG = {
 }
 
 export const COLORS = {
-  BACKGROUND: '#0F1419',
-  GRID: '#1A1F2E',
-  GRID_HOVER: '#232937',
-  CORE: '#FF5722',
-  SPAWN_GATE: '#9C27B0',
-  OBSTACLE: '#424242',
+  BACKGROUND: '#F8F9FA',
+  GRID: '#E9ECEF',
+  GRID_HOVER: '#DEE2E6',
+  CORE: '#DC3545',
+  SPAWN_GATE: '#6F42C1',
+  OBSTACLE: '#6C757D',
   PHEROMONE: {
-    FOOD: '#4CAF50',
-    DANGER: '#F44336',
-    PATH: '#2196F3'
+    FOOD: '#28A745',
+    DANGER: '#DC3545',
+    PATH: '#0069D9'
   },
   UI: {
-    PRIMARY: '#4A9EFF',
-    SECONDARY: '#6BB6FF',
-    ACCENT: '#FFD700',
-    TEXT: '#FFFFFF',
+    PRIMARY: '#0069D9',
+    SECONDARY: '#5EB1FF',
+    ACCENT: '#FFC107',
+    TEXT: '#212529',
     TEXT_DARK: '#000000',
-    SUCCESS: '#4CAF50',
-    ERROR: '#F44336',
-    WARNING: '#FF9800'
+    SUCCESS: '#28A745',
+    ERROR: '#DC3545',
+    WARNING: '#FD7E14'
   }
 }
 

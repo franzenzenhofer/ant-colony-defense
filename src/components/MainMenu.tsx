@@ -42,7 +42,7 @@ export default function MainMenu({
           <h3>🎯 Objective</h3>
           <p>Defend your picnic from waves of intelligent ants using strategic tower placement!</p>
           
-          <h3>🐜 Ant Types</h3>
+          <h3>Ant Types</h3>
           <ul style={{ textAlign: 'left', listStyle: 'none', padding: 0 }}>
             <li>🟫 <strong>Worker Ants</strong> - Basic ants, moderate health</li>
             <li>🔴 <strong>Soldier Ants</strong> - Tanky ants with armor</li>
@@ -83,7 +83,7 @@ export default function MainMenu({
   
   return (
     <div className="menu-container">
-      <h1 className="menu-title">🐜 Ant Colony Defense 🐜</h1>
+      <h1 className="menu-title">Ant Colony Defense</h1>
       <p className="menu-subtitle">Strategic Tower Defense with Real Colony AI</p>
       
       {bestScore > 0 && (
@@ -148,7 +148,7 @@ export default function MainMenu({
       }}>
         v{versionInfo.version} • Build {new Date(versionInfo.buildTime).toLocaleDateString()}
         <br />
-        Made with 🐜 by Franz AI
+        Made with ❤️ by Franz AI
       </p>
     </div>
   )
