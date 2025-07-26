@@ -13,7 +13,7 @@
   --color-danger: #FF4757;
   --color-success: #2ED573;
   --color-text: #FFFFFF;
-  --color-text-dim: #94A3B8;
+  --color-text-dim: #CBD5E0;
   --color-border: #2D3748;
 
   color: var(--color-text);
@@ -93,17 +93,18 @@ button {
   font-size: 1rem;
   font-weight: 600;
   font-family: inherit;
-  background: var(--color-sand);
+  background: var(--color-bg-secondary);
   color: var(--color-text);
   cursor: pointer;
   transition: all 0.2s ease;
   border-radius: 0.5rem;
+  border: 2px solid var(--color-border);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   white-space: nowrap;
 }
 
 button:hover:not(:disabled) {
-  background: var(--color-sand-light);
+  background: var(--color-primary);
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
@@ -142,7 +143,7 @@ button.success {
 }
 
 .tower-button.selected {
-  background: var(--color-sand-light);
+  background: var(--color-primary);
   outline: 2px solid var(--color-accent);
 }
 

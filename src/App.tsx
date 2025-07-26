@@ -76,10 +76,13 @@ function App(): JSX.Element {
   
   const handleContinueGame = useCallback(() => {
     const savedGame = SaveManager.load()
-    if (savedGame?.currentLevel) {
+    if (savedGame?.currentLevel && savedGame.currentLevel > 0) {
       handleStartGame(savedGame.currentLevel)
+    } else {
+      // If no valid saved game, go to level select
+      actions.setPhase(GamePhase.BUILD)
     }
-  }, [handleStartGame])
+  }, [handleStartGame, actions])
 
   switch (state.phase) {
     case GamePhase.MENU:
