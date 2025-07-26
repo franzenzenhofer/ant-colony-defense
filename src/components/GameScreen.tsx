@@ -216,13 +216,11 @@ export default function GameScreen({
       </div>
       
       {/* Tower Selector */}
-      {gameState.phase === GamePhase.BUILD && (
-        <TowerSelector
-          selectedType={gameState.selectedTowerType}
-          resources={gameState.resources}
-          onSelectType={actions.setSelectedTowerType}
-        />
-      )}
+      <TowerSelector
+        selectedType={gameState.selectedTowerType}
+        resources={gameState.resources}
+        onSelectType={actions.setSelectedTowerType}
+      />
       
       {/* Wave Manager */}
       <WaveManager

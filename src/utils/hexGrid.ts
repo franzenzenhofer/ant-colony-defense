@@ -90,7 +90,8 @@ export function drawHex(
 ): void {
   ctx.beginPath()
   for (let i = 0; i < 6; i++) {
-    const angle = 2 * Math.PI / 6 * i
+    // Start at 30 degrees (π/6) for flat-top hexagons
+    const angle = Math.PI / 6 + 2 * Math.PI / 6 * i
     const x = center.x + size * Math.cos(angle)
     const y = center.y + size * Math.sin(angle)
     if (i === 0) {

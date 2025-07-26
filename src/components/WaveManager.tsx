@@ -79,15 +79,11 @@ export default function WaveManager({
     soundManager.playWaveStart()
   }, [gameState.currentWave, level.waves, actions])
   
-  // Start wave when build phase ends - NOW startWave is defined
+  // Start first wave immediately when game begins
   useEffect(() => {
     if (gameState.phase === GamePhase.BUILD && gameState.currentWave === 0) {
-      // Auto-start first wave after delay
-      const timer = setTimeout(() => {
-        startWave()
-      }, 5000)
-      
-      return () => clearTimeout(timer)
+      // Start immediately
+      startWave()
     }
   }, [gameState.phase, gameState.currentWave, startWave])
   
@@ -149,11 +145,17 @@ export default function WaveManager({
             ant.position,
             ant.targetPosition ?? level.corePosition,
             obstacles,
-            gameState.pheromones
+            level.gridRadius
           )
           
           if (path.length > 0) {
             actions.updateAnt(ant.id, { path })
+          } else {
+            // If no path found, try direct path to core
+            console.warn('No path found for ant', ant.id, 'at', ant.position, 'to', ant.targetPosition)
+            // Move ant directly towards core (fallback)
+            const fallbackPath = [ant.targetPosition ?? level.corePosition]
+            actions.updateAnt(ant.id, { path: fallbackPath })
           }
         }
         
@@ -206,7 +208,7 @@ export default function WaveManager({
     }, GAME_CONFIG.GAME_UPDATE_INTERVAL / gameState.gameSpeed)
     
     return () => clearInterval(moveInterval)
-  }, [gameState, level.corePosition, actions])
+  }, [gameState, level.corePosition, level.gridRadius, actions])
   
   // Tower attacks
   useEffect(() => {
@@ -278,17 +280,28 @@ export default function WaveManager({
       onLevelComplete()
       soundManager.playVictory()
     } else {
-      // Next wave
+      // Next wave - auto-start after 2 seconds
       actions.setWave(gameState.currentWave + 1)
       actions.setPhase(GamePhase.BUILD)
+      
+      // Auto-start next wave
+      setTimeout(() => {
+        startWave()
+      }, 2000)
     }
-  }, [gameState.currentWave, level.waves.length, actions, onLevelComplete])
+  }, [gameState.currentWave, level.waves.length, actions, onLevelComplete, startWave])
   
-  const skipBuildPhase = useCallback((): void => {
-    if (gameState.phase === GamePhase.BUILD) {
-      startWave()
+  
+  // Auto-start subsequent waves
+  useEffect(() => {
+    if (gameState.phase === GamePhase.BUILD && gameState.currentWave > 0) {
+      const timer = setTimeout(() => {
+        startWave()
+      }, 2000) // 2s between waves
+      
+      return () => clearTimeout(timer)
     }
-  }, [gameState.phase, startWave])
+  }, [gameState.phase, gameState.currentWave, startWave])
   
   // Check wave completion
   useEffect(() => {
@@ -315,22 +328,7 @@ export default function WaveManager({
   
   return (
     <div className="wave-controls">
-      {gameState.phase === GamePhase.BUILD && (
-        <button 
-          className="primary"
-          onClick={skipBuildPhase}
-          style={{ 
-            position: 'absolute',
-            bottom: '120px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '1rem 2rem',
-            fontSize: '1.2rem'
-          }}
-        >
-          Start Wave {gameState.currentWave + 1}
-        </button>
-      )}
+      {/* Removed wave start button - game starts automatically */}
       
       {gameState.phase === GamePhase.WAVE && (
         <div style={{

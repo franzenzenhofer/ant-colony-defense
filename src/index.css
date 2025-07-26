@@ -53,10 +53,15 @@ body {
 /* Game specific styles */
 .game-container {
   width: 100%;
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--color-bg-dark);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .game-header {
@@ -143,6 +148,8 @@ button.success {
   gap: 0.25rem;
   padding: 0.5rem;
   min-width: 80px;
+  position: relative;
+  overflow: hidden;
 }
 
 .tower-button.selected {
@@ -302,13 +309,23 @@ button.success {
   }
   
   .tower-button {
-    min-width: 90px;
-    padding: 0.75rem;
-    font-size: 0.9rem;
+    min-width: 70px;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+    gap: 0.125rem;
   }
   
-  .tower-button span {
-    font-size: 2rem; /* Larger tower icons */
+  .tower-button span:first-child {
+    font-size: 1.5rem; /* Tower icon */
+  }
+  
+  .tower-button span:nth-child(2) {
+    font-size: 0.7rem; /* Tower name */
+    font-weight: 600;
+  }
+  
+  .tower-button span:nth-child(3) {
+    font-size: 0.65rem; /* Cost */
   }
   
   .game-controls {
