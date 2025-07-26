@@ -77,7 +77,6 @@ export default function WaveManager({
     setWaveStartTime(Date.now())
     actions.setPhase(GamePhase.WAVE)
     soundManager.playWaveStart()
-    console.log('Starting wave', gameState.currentWave + 1, 'with', antsArray.length, 'ants to spawn')
   }, [gameState.currentWave, level.waves, actions])
   
   // Start first wave immediately when game begins
@@ -90,18 +89,15 @@ export default function WaveManager({
   
   // Spawn ants during wave
   useEffect(() => {
-    if (gameState.phase !== GamePhase.WAVE || antsToSpawn.length === 0 || gameState.isPaused) {
-      if (gameState.phase === GamePhase.WAVE && antsToSpawn.length === 0) {
-        console.log('No ants to spawn in wave phase')
-      }
+    // Use a ref to check antsToSpawn length to avoid dependency issues
+    const hasAnts = antsToSpawn.length > 0
+    if (gameState.phase !== GamePhase.WAVE || !hasAnts || gameState.isPaused) {
       return
     }
     
-    console.log('Setting up spawn interval, ants to spawn:', antsToSpawn.length)
     
     const spawnInterval = setInterval(() => {
       setAntsToSpawn(prev => {
-        console.log('Spawn interval tick, remaining:', prev.length)
         if (prev.length > 0) {
           const nextAnt = prev[0]
         
@@ -125,7 +121,6 @@ export default function WaveManager({
           }
           
           actions.addAnt(ant)
-          console.log('Spawned ant:', ant.id, 'at position:', ant.position, 'total ants:', gameState.ants.size + 1)
           
           return prev.slice(1) // Return the updated array
         }
@@ -134,7 +129,7 @@ export default function WaveManager({
     }, GAME_CONFIG.ANT_SPAWN_INTERVAL / gameState.gameSpeed)
     
     return () => clearInterval(spawnInterval)
-  }, [gameState.phase, antsToSpawn, gameState.isPaused, gameState.gameSpeed, gameState.currentWave, level, actions, gameState.ants.size])
+  }, [gameState.phase, gameState.isPaused, gameState.gameSpeed, gameState.currentWave, level, actions]) // eslint-disable-line react-hooks/exhaustive-deps
   
   // Update ant paths and movement
   useEffect(() => {
@@ -164,7 +159,6 @@ export default function WaveManager({
             actions.updateAnt(ant.id, { path })
           } else {
             // If no path found, try direct path to core
-            console.warn('No path found for ant', ant.id, 'at', ant.position, 'to', ant.targetPosition)
             // Move ant directly towards core (fallback)
             const fallbackPath = [ant.targetPosition ?? level.corePosition]
             actions.updateAnt(ant.id, { path: fallbackPath })
