@@ -109,11 +109,15 @@ async function deploy() {
     log('⚠️  GitHub release failed (continuing deployment)', 'yellow');
   }
   
-  // Step 7: Copy worker file to dist
+  // Step 7: Copy worker file to dist and create .assetsignore
   log('\n📋 Preparing deployment files', 'cyan');
   try {
     fs.copyFileSync(path.join(__dirname, '..', '_worker.js'), path.join(__dirname, '..', 'dist', '_worker.js'));
     log('✅ Copied _worker.js to dist/', 'green');
+    
+    // Create .assetsignore to prevent _worker.js from being uploaded as asset
+    fs.writeFileSync(path.join(__dirname, '..', 'dist', '.assetsignore'), '_worker.js');
+    log('✅ Created .assetsignore file', 'green');
   } catch (error) {
     log('⚠️  Failed to copy _worker.js (may not exist)', 'yellow');
   }
