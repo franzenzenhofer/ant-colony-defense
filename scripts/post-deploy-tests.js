@@ -21,7 +21,7 @@ function log(message, color = 'reset') {
   console.log(`${COLORS[color]}${message}${COLORS.reset}`);
 }
 
-const SITE_URL = 'https://ant-colony-defense.franzai.com';
+const SITE_URL = process.env.TEST_URL || 'https://ant-colony-defense.pages.dev';
 
 const tests = [
   {

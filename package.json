@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "postdev": "npm run test:post-deploy",
     "build": "vite build && npm run build:worker",
     "prebuild": "npm run lint && npm run typecheck",
     "build:worker": "echo 'Worker uses static assets from dist/'",
