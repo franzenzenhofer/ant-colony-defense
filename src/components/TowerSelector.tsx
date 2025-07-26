@@ -1,5 +1,6 @@
 import { TowerType } from '../types'
 import { TOWER_STATS } from '../core/constants'
+import { soundManager } from '../utils/soundManager'
 
 interface TowerSelectorProps {
   selectedType: TowerType | null
@@ -23,7 +24,12 @@ export default function TowerSelector({
           <button
             key={type}
             className={`tower-button ${isSelected ? 'selected' : ''}`}
-            onClick={() => onSelectType(isSelected ? null : towerType)}
+            onClick={() => {
+              if (canAfford || isSelected) {
+                soundManager.playButtonClick()
+                onSelectType(isSelected ? null : towerType)
+              }
+            }}
             disabled={!canAfford}
             title={`${stats.name} - ${stats.description} (Hotkey: ${index + 1})`}
           >

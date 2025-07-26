@@ -18,6 +18,9 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
     const animationFrameRef = useRef<number>()
     const particleSystemRef = useRef(new ParticleSystem())
     const lastAntCountRef = useRef(gameState.ants.size)
+    const zoomRef = useRef(1)
+    const panRef = useRef({ x: 0, y: 0 })
+    const lastTouchDistanceRef = useRef<number | null>(null)
     
     useImperativeHandle(ref, () => canvasRef.current!)
     
@@ -38,7 +41,12 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
       
       const handleInteraction = (x: number, y: number, isRightClick: boolean = false): void => {
         const center = { x: canvas.width / 2, y: canvas.height / 2 }
-        const hex = pixelToHex({ x, y }, center)
+        
+        // Adjust coordinates for zoom and pan
+        const adjustedX = (x - center.x - panRef.current.x) / zoomRef.current + center.x
+        const adjustedY = (y - center.y - panRef.current.y) / zoomRef.current + center.y
+        
+        const hex = pixelToHex({ x: adjustedX, y: adjustedY }, center)
         
         if (isValidHex(hex, level.gridRadius)) {
           if (isRightClick) {
@@ -71,6 +79,15 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
             handleInteraction(coords.x, coords.y, true)
             longPressTimer = null
           }, 500)
+        } else if (e.touches.length === 2) {
+          // Handle pinch-to-zoom
+          const touch1 = e.touches[0]
+          const touch2 = e.touches[1]
+          const distance = Math.hypot(
+            touch2.clientX - touch1.clientX,
+            touch2.clientY - touch1.clientY
+          )
+          lastTouchDistanceRef.current = distance
         }
       }
       
@@ -98,10 +115,26 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
         }
       }
       
-      const handleTouchMove = (): void => {
+      const handleTouchMove = (e: TouchEvent): void => {
         if (longPressTimer) {
           clearTimeout(longPressTimer)
           longPressTimer = null
+        }
+        
+        // Handle pinch-to-zoom
+        if (e.touches.length === 2 && lastTouchDistanceRef.current) {
+          const touch1 = e.touches[0]
+          const touch2 = e.touches[1]
+          const distance = Math.hypot(
+            touch2.clientX - touch1.clientX,
+            touch2.clientY - touch1.clientY
+          )
+          
+          const scaleDelta = distance / lastTouchDistanceRef.current
+          zoomRef.current = Math.max(0.5, Math.min(2, zoomRef.current * scaleDelta))
+          lastTouchDistanceRef.current = distance
+          
+          e.preventDefault()
         }
       }
       
@@ -172,7 +205,12 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
         ctx.fillStyle = COLORS.BACKGROUND
         ctx.fillRect(0, 0, canvas.width, canvas.height)
         
+        // Apply zoom and pan transforms
+        ctx.save()
         const center = { x: canvas.width / 2, y: canvas.height / 2 }
+        ctx.translate(center.x + panRef.current.x, center.y + panRef.current.y)
+        ctx.scale(zoomRef.current, zoomRef.current)
+        ctx.translate(-center.x, -center.y)
         
         // Draw grid
         for (let q = -level.gridRadius; q <= level.gridRadius; q++) {
@@ -333,6 +371,9 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
           
           ctx.fillText(emoji, pixel.x, pixel.y)
         })
+        
+        // Restore context before particles (they should render in screen space)
+        ctx.restore()
         
         // Update and render particles
         particleSystemRef.current.update()

@@ -1,5 +1,7 @@
 import { Trophy, Play, BookOpen, Volume2, VolumeX } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { soundManager } from '../utils/soundManager'
+import versionInfo from '../version.json'
 
 interface MainMenuProps {
   onStartGame: () => void
@@ -28,6 +30,7 @@ export default function MainMenu({
   const toggleSound = (): void => {
     const newValue = !soundEnabled
     setSoundEnabled(newValue)
+    soundManager.setEnabled(newValue)
     localStorage.setItem('ant-colony-defense-sound', String(newValue))
   }
   
@@ -67,7 +70,10 @@ export default function MainMenu({
           <p>• Save fire towers for tough enemies</p>
           <p>• Watch the pheromone trails to predict paths</p>
           
-          <button className="primary" onClick={() => setShowTutorial(false)}>
+          <button className="primary" onClick={() => {
+            soundManager.playButtonClick()
+            setShowTutorial(false)
+          }}>
             Back to Menu
           </button>
         </div>
@@ -89,28 +95,43 @@ export default function MainMenu({
       
       <div className="menu-buttons">
         {hasSavedGame ? (
-          <button className="primary" onClick={onContinueGame}>
+          <button className="primary" onClick={() => {
+            soundManager.playButtonClick()
+            onContinueGame()
+          }}>
             <Play size={20} />
             Continue Game
           </button>
         ) : (
-          <button className="primary" onClick={onSelectLevel}>
+          <button className="primary" onClick={() => {
+            soundManager.playButtonClick()
+            onSelectLevel()
+          }}>
             <Play size={20} />
             New Game
           </button>
         )}
         
-        <button onClick={onSelectLevel}>
+        <button onClick={() => {
+          soundManager.playButtonClick()
+          onSelectLevel()
+        }}>
           <Trophy size={20} />
           Select Level
         </button>
         
-        <button onClick={() => setShowTutorial(true)}>
+        <button onClick={() => {
+          soundManager.playButtonClick()
+          setShowTutorial(true)
+        }}>
           <BookOpen size={20} />
           How to Play
         </button>
         
-        <button onClick={toggleSound}>
+        <button onClick={() => {
+          soundManager.playButtonClick()
+          toggleSound()
+        }}>
           {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
           Sound: {soundEnabled ? 'On' : 'Off'}
         </button>
@@ -122,9 +143,12 @@ export default function MainMenu({
         left: '50%', 
         transform: 'translateX(-50%)',
         fontSize: '0.8rem',
-        color: 'var(--color-text-dim)'
+        color: 'var(--color-text-dim)',
+        textAlign: 'center'
       }}>
-        v1.0.0 • Made with 🐜 by Franz AI
+        v{versionInfo.version} • Build {new Date(versionInfo.buildTime).toLocaleDateString()}
+        <br />
+        Made with 🐜 by Franz AI
       </p>
     </div>
   )

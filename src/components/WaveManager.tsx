@@ -3,6 +3,7 @@ import { LevelConfig, GameState, GamePhase, AntType, Ant, Tower, Pheromone, HexC
 import { ANT_STATS, GAME_CONFIG, TOWER_STATS } from '../core/constants'
 import { AntColonyOptimization } from '../algorithms/antColonyOptimization'
 import { hexToKey } from '../utils/hexGrid'
+import { soundManager } from '../utils/soundManager'
 
 interface GameActions {
   setPhase: (phase: GamePhase) => void
@@ -212,6 +213,7 @@ export default function WaveManager({
                   actions.removeAnt(antId)
                   actions.setResources(gameState.resources + ANT_STATS[ant.type].reward)
                   actions.updateScore(gameState.score + ANT_STATS[ant.type].reward * 10)
+                  soundManager.playAntDeath()
                 }
               }
             })
@@ -233,11 +235,15 @@ export default function WaveManager({
                 actions.removeAnt(targetsInRange[0])
                 actions.setResources(gameState.resources + ANT_STATS[targetAnt.type].reward)
                 actions.updateScore(gameState.score + ANT_STATS[targetAnt.type].reward * 10)
+                soundManager.playAntDeath()
+              } else if (damage > 0) {
+                soundManager.playAntHurt()
               }
             }
           }
           
           actions.updateTower(tower.id, { lastAttackTime: now })
+          soundManager.playTowerShoot()
         }
       })
     }, 100 / gameState.gameSpeed)
@@ -270,6 +276,7 @@ export default function WaveManager({
     setAntsToSpawn(antsArray)
     setWaveStartTime(Date.now())
     actions.setPhase(GamePhase.WAVE)
+    soundManager.playWaveStart()
   }, [gameState.currentWave, level.waves, actions])
   
   const endWave = useCallback((): void => {
@@ -277,6 +284,7 @@ export default function WaveManager({
       // Level complete!
       actions.setPhase(GamePhase.VICTORY)
       onLevelComplete()
+      soundManager.playVictory()
     } else {
       // Next wave
       actions.setWave(gameState.currentWave + 1)
@@ -305,7 +313,10 @@ export default function WaveManager({
       {gameState.phase === GamePhase.BUILD ? (
         <>
           <p style={{ marginBottom: '0.5rem' }}>Build Phase</p>
-          <button className="primary" onClick={skipBuildPhase}>
+          <button className="primary" onClick={() => {
+            soundManager.playButtonClick()
+            skipBuildPhase()
+          }}>
             Start Wave {gameState.currentWave + 1}
           </button>
         </>

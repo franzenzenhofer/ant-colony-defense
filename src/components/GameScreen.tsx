@@ -6,6 +6,7 @@ import TowerSelector from './TowerSelector'
 import WaveManager from './WaveManager'
 import { TOWER_STATS, GAME_CONFIG } from '../core/constants'
 import { hexToKey } from '../utils/hexGrid'
+import { soundManager } from '../utils/soundManager'
 
 interface GameActions {
   setPhase: (phase: GamePhase) => void
@@ -73,10 +74,11 @@ export default function GameScreen({
   
   // Check win/lose conditions
   useEffect(() => {
-    if (gameState.coreHealth <= 0) {
+    if (gameState.coreHealth <= 0 && gameState.phase !== GamePhase.DEFEAT) {
       actions.setPhase(GamePhase.DEFEAT)
+      soundManager.playDefeat()
     }
-  }, [gameState.coreHealth, actions])
+  }, [gameState.coreHealth, gameState.phase, actions])
   
   const handlePlaceTower = useCallback((hex: HexCoordinate): void => {
     if (!gameState.selectedTowerType || gameState.phase !== GamePhase.BUILD) {
@@ -120,6 +122,7 @@ export default function GameScreen({
     actions.addTower(tower)
     actions.setResources(gameState.resources - towerStats.cost)
     setSelectedHex(hex)
+    soundManager.playTowerPlace()
   }, [gameState, actions, level])
   
   const handleSellTower = useCallback((hex: HexCoordinate): void => {
@@ -132,6 +135,7 @@ export default function GameScreen({
       const sellPrice = Math.floor(TOWER_STATS[tower.type].cost * 0.7)
       actions.removeTower(tower.id)
       actions.setResources(gameState.resources + sellPrice)
+      soundManager.playButtonClick()
     }
   }, [gameState, actions])
   
@@ -140,6 +144,7 @@ export default function GameScreen({
     const currentIndex = speeds.indexOf(gameState.gameSpeed)
     const nextIndex = (currentIndex + 1) % speeds.length
     actions.setGameSpeed(speeds[nextIndex])
+    soundManager.playButtonClick()
   }
   
   return (
@@ -166,6 +171,7 @@ export default function GameScreen({
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button 
             onClick={() => {
+              soundManager.playButtonClick()
               actions.setPaused(!gameState.isPaused)
               setShowPauseMenu(!gameState.isPaused)
             }}
@@ -185,7 +191,10 @@ export default function GameScreen({
           </button>
           
           <button 
-            onClick={onReturnToMenu}
+            onClick={() => {
+              soundManager.playButtonClick()
+              onReturnToMenu()
+            }}
             style={{ padding: '0.5rem' }}
             aria-label="Home"
           >
@@ -233,6 +242,7 @@ export default function GameScreen({
               <button 
                 className="primary"
                 onClick={() => {
+                  soundManager.playButtonClick()
                   actions.setPaused(false)
                   setShowPauseMenu(false)
                 }}
@@ -240,11 +250,17 @@ export default function GameScreen({
                 Resume Game
               </button>
               
-              <button onClick={() => window.location.reload()}>
+              <button onClick={() => {
+                soundManager.playButtonClick()
+                window.location.reload()
+              }}>
                 Restart Level
               </button>
               
-              <button onClick={onReturnToMenu}>
+              <button onClick={() => {
+                soundManager.playButtonClick()
+                onReturnToMenu()
+              }}>
                 Main Menu
               </button>
             </div>

@@ -1,5 +1,6 @@
 import { Lock, Check, ChevronLeft } from 'lucide-react'
 import { CAMPAIGN_LEVELS } from '../core/levels'
+import { soundManager } from '../utils/soundManager'
 
 interface LevelSelectProps {
   unlockedLevels: number[]
@@ -15,7 +16,10 @@ export default function LevelSelect({
   return (
     <div className="menu-container">
       <button 
-        onClick={onBack} 
+        onClick={() => {
+          soundManager.playButtonClick()
+          onBack()
+        }} 
         style={{ 
           position: 'absolute', 
           top: '1rem', 
@@ -42,7 +46,12 @@ export default function LevelSelect({
             <div
               key={level.id}
               className={`level-card ${!isUnlocked ? 'locked' : ''} ${isCompleted ? 'completed' : ''}`}
-              onClick={() => isUnlocked && onSelectLevel(level.id)}
+              onClick={() => {
+                if (isUnlocked) {
+                  soundManager.playButtonClick()
+                  onSelectLevel(level.id)
+                }
+              }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <h3>Level {level.id}</h3>
