@@ -44,8 +44,8 @@ async function deploy() {
   // Deploy to Cloudflare Workers
   log('\n🚀 Deploying to Cloudflare Workers', 'magenta');
   const deploySuccess = execCommand(
-    'wrangler pages deploy dist --project-name=ant-colony-defense',
-    ''
+    'wrangler deploy',
+    'Deploying to ant-colony-defense.franzai.com'
   );
   
   if (!deploySuccess) {
