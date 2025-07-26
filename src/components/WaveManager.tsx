@@ -42,6 +42,7 @@ export default function WaveManager({
 }: WaveManagerProps): JSX.Element {
   const [, setWaveStartTime] = useState(0)
   const [antsToSpawn, setAntsToSpawn] = useState<Array<{ type: AntType; gate: number }>>([])
+  const antsToSpawnRef = useRef<Array<{ type: AntType; gate: number }>>([])
   const acoRef = useRef(new AntColonyOptimization({
     alpha: 1.0,
     beta: 2.0,
@@ -74,6 +75,7 @@ export default function WaveManager({
     }
     
     setAntsToSpawn(antsArray)
+    antsToSpawnRef.current = antsArray
     setWaveStartTime(Date.now())
     actions.setPhase(GamePhase.WAVE)
     soundManager.playWaveStart()
@@ -87,49 +89,49 @@ export default function WaveManager({
     }
   }, [gameState.phase, gameState.currentWave, startWave])
   
+  // Update ref when antsToSpawn changes
+  useEffect(() => {
+    antsToSpawnRef.current = antsToSpawn
+  }, [antsToSpawn])
+  
   // Spawn ants during wave
   useEffect(() => {
-    // Use a ref to check antsToSpawn length to avoid dependency issues
-    const hasAnts = antsToSpawn.length > 0
-    if (gameState.phase !== GamePhase.WAVE || !hasAnts || gameState.isPaused) {
+    if (gameState.phase !== GamePhase.WAVE || gameState.isPaused) {
       return
     }
     
     
     const spawnInterval = setInterval(() => {
-      setAntsToSpawn(prev => {
-        if (prev.length > 0) {
-          const nextAnt = prev[0]
+      if (antsToSpawnRef.current.length > 0) {
+        const nextAnt = antsToSpawnRef.current[0]
+        antsToSpawnRef.current = antsToSpawnRef.current.slice(1)
+        setAntsToSpawn(antsToSpawnRef.current)
         
-          const wave = level.waves[gameState.currentWave]
-          const spawnGate = wave.spawnGates[nextAnt.gate] || level.spawnGates[nextAnt.gate]
-          
-          const ant = {
-            id: `ant-${Date.now()}-${Math.random()}`,
-            type: nextAnt.type,
-            position: { ...spawnGate },
-            targetPosition: level.corePosition,
-            hp: ANT_STATS[nextAnt.type].hp,
-            maxHp: ANT_STATS[nextAnt.type].maxHp,
-            speed: ANT_STATS[nextAnt.type].speed,
-            damage: ANT_STATS[nextAnt.type].damage,
-            armor: ANT_STATS[nextAnt.type].armor,
-            pheromoneStrength: 10,
-            carryingFood: false,
-            path: [],
-            animationProgress: 0
-          }
-          
-          actions.addAnt(ant)
-          
-          return prev.slice(1) // Return the updated array
+        const wave = level.waves[gameState.currentWave]
+        const spawnGate = wave.spawnGates[nextAnt.gate] || level.spawnGates[nextAnt.gate]
+        
+        const ant = {
+          id: `ant-${Date.now()}-${Math.random()}`,
+          type: nextAnt.type,
+          position: { ...spawnGate },
+          targetPosition: level.corePosition,
+          hp: ANT_STATS[nextAnt.type].hp,
+          maxHp: ANT_STATS[nextAnt.type].maxHp,
+          speed: ANT_STATS[nextAnt.type].speed,
+          damage: ANT_STATS[nextAnt.type].damage,
+          armor: ANT_STATS[nextAnt.type].armor,
+          pheromoneStrength: 10,
+          carryingFood: false,
+          path: [],
+          animationProgress: 0
         }
-        return prev // Return unchanged if no ants to spawn
-      })
+        
+        actions.addAnt(ant)
+      }
     }, GAME_CONFIG.ANT_SPAWN_INTERVAL / gameState.gameSpeed)
     
     return () => clearInterval(spawnInterval)
-  }, [gameState.phase, gameState.isPaused, gameState.gameSpeed, gameState.currentWave, level, actions]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [gameState.phase, gameState.isPaused, gameState.gameSpeed, gameState.currentWave, level, actions])
   
   // Update ant paths and movement
   useEffect(() => {

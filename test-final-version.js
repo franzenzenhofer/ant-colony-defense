@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function testFinalVersion() {
-  console.log('🎮 TESTING FINAL VERSION 1.19.1 - ANT SPAWNING FIX');
+  console.log('🎮 TESTING FINAL VERSION 1.21.1 - ANT SPAWNING FIX');
   
   const browser = await chromium.launch({ 
     headless: false,
@@ -26,15 +26,18 @@ async function testFinalVersion() {
   // Monitor console
   page.on('console', msg => {
     const text = msg.text();
-    if (text.includes('Spawn') || text.includes('ant')) {
+    if (text.includes('Spawn') || text.includes('ant') || text.includes('error')) {
       console.log('🐜', text);
     }
   });
   
   try {
-    // Navigate to game
-    await page.goto('https://ant-colony-defense.franzai.com');
-    await page.waitForLoadState('networkidle');
+    // Navigate to game with cache bypass
+    await page.goto('https://ant-colony-defense.franzai.com', {
+      waitUntil: 'networkidle',
+      bypassCSP: true
+    });
+    await page.reload({ waitUntil: 'networkidle' });
     console.log('✅ Game loaded');
     
     // Start new game
