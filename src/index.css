@@ -3,20 +3,21 @@
   line-height: 1.5;
   font-weight: 400;
 
-  /* Ant colony theme colors */
-  --color-earth-dark: #2C1810;
-  --color-earth: #3E2723;
-  --color-earth-light: #5D4037;
-  --color-sand: #8B4513;
-  --color-sand-light: #D2691E;
-  --color-accent: #FFD700;
-  --color-danger: #DC143C;
-  --color-success: #32CD32;
+  /* Modern game theme colors - inspired by mobile games */
+  --color-bg-dark: #0F1419;
+  --color-bg-primary: #1A1F2E;
+  --color-bg-secondary: #232937;
+  --color-primary: #4A9EFF;
+  --color-primary-light: #6BB6FF;
+  --color-accent: #FFD93D;
+  --color-danger: #FF4757;
+  --color-success: #2ED573;
   --color-text: #FFFFFF;
-  --color-text-dim: #CCCCCC;
+  --color-text-dim: #94A3B8;
+  --color-border: #2D3748;
 
   color: var(--color-text);
-  background-color: var(--color-earth-dark);
+  background-color: var(--color-bg-dark);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -34,11 +35,12 @@
 body {
   margin: 0;
   width: 100vw;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 #root {
