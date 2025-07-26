@@ -96,42 +96,45 @@ export default function WaveManager({
   
   // Spawn ants during wave
   useEffect(() => {
-    if (gameState.phase !== GamePhase.WAVE || gameState.isPaused) {
+    if (gameState.phase !== GamePhase.WAVE || gameState.isPaused || antsToSpawn.length === 0) {
       return
     }
     
-    
     const spawnInterval = setInterval(() => {
-      if (antsToSpawnRef.current.length > 0) {
-        const nextAnt = antsToSpawnRef.current[0]
-        antsToSpawnRef.current = antsToSpawnRef.current.slice(1)
-        setAntsToSpawn(antsToSpawnRef.current)
-        
-        const wave = level.waves[gameState.currentWave]
-        const spawnGate = wave.spawnGates[nextAnt.gate] || level.spawnGates[nextAnt.gate]
-        
-        const ant = {
-          id: `ant-${Date.now()}-${Math.random()}`,
-          type: nextAnt.type,
-          position: { ...spawnGate },
-          targetPosition: level.corePosition,
-          hp: ANT_STATS[nextAnt.type].hp,
-          maxHp: ANT_STATS[nextAnt.type].maxHp,
-          speed: ANT_STATS[nextAnt.type].speed,
-          damage: ANT_STATS[nextAnt.type].damage,
-          armor: ANT_STATS[nextAnt.type].armor,
-          pheromoneStrength: 10,
-          carryingFood: false,
-          path: [],
-          animationProgress: 0
+      setAntsToSpawn(prev => {
+        if (prev.length > 0) {
+          const nextAnt = prev[0]
+          const remaining = prev.slice(1)
+          
+          const wave = level.waves[gameState.currentWave]
+          const spawnGate = wave.spawnGates[nextAnt.gate] || level.spawnGates[nextAnt.gate]
+          
+          const ant = {
+            id: `ant-${Date.now()}-${Math.random()}`,
+            type: nextAnt.type,
+            position: { ...spawnGate },
+            targetPosition: level.corePosition,
+            hp: ANT_STATS[nextAnt.type].hp,
+            maxHp: ANT_STATS[nextAnt.type].maxHp,
+            speed: ANT_STATS[nextAnt.type].speed,
+            damage: ANT_STATS[nextAnt.type].damage,
+            armor: ANT_STATS[nextAnt.type].armor,
+            pheromoneStrength: 10,
+            carryingFood: false,
+            path: [],
+            animationProgress: 0
+          }
+          
+          actions.addAnt(ant)
+          
+          return remaining
         }
-        
-        actions.addAnt(ant)
-      }
+        return prev
+      })
     }, GAME_CONFIG.ANT_SPAWN_INTERVAL / gameState.gameSpeed)
     
     return () => clearInterval(spawnInterval)
-  }, [gameState.phase, gameState.isPaused, gameState.gameSpeed, gameState.currentWave, level, actions])
+  }, [gameState.phase, gameState.isPaused, gameState.gameSpeed, gameState.currentWave, level, actions]) // eslint-disable-line react-hooks/exhaustive-deps
   
   // Update ant paths and movement
   useEffect(() => {
