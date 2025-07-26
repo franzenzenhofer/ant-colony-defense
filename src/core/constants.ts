@@ -9,7 +9,7 @@ export const ANT_STATS: Record<AntType, AntStats> = {
     armor: 0,
     reward: 5,
     size: 8,
-    color: '#8B4513' // Saddle Brown
+    color: '#FF6B35' // Bright Orange
   },
   [AntType.SOLDIER]: {
     hp: 50,
@@ -122,9 +122,9 @@ export const GAME_CONFIG = {
 }
 
 export const COLORS = {
-  BACKGROUND: '#2C1810',
-  GRID: '#3E2723',
-  GRID_HOVER: '#5D4037',
+  BACKGROUND: '#0F1419',
+  GRID: '#1A1F2E',
+  GRID_HOVER: '#232937',
   CORE: '#FF5722',
   SPAWN_GATE: '#9C27B0',
   OBSTACLE: '#424242',
@@ -134,8 +134,8 @@ export const COLORS = {
     PATH: '#2196F3'
   },
   UI: {
-    PRIMARY: '#8B4513',
-    SECONDARY: '#D2691E',
+    PRIMARY: '#4A9EFF',
+    SECONDARY: '#6BB6FF',
     ACCENT: '#FFD700',
     TEXT: '#FFFFFF',
     TEXT_DARK: '#000000',

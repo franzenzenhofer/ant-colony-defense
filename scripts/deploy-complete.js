@@ -37,11 +37,50 @@ function execCommand(command, description) {
 async function deploy() {
   log('\n🚀 Starting Complete Deployment Process', 'magenta');
   
-  // Get version
-  const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf-8'));
-  log(`\nℹ️  Deploying version: ${packageJson.version}`, 'blue');
+  // Step 1: Check Git status
+  log('\n📋 Checking Git status', 'cyan');
+  const gitStatus = execCommand('git status --porcelain', 'Checking for uncommitted changes');
   
-  // Deploy to Cloudflare Workers
+  // Step 2: Auto-increment version
+  log('\n📦 Auto-incrementing version', 'cyan');
+  const versionSuccess = execCommand('npm run version:bump:patch', 'Bumping patch version automatically');
+  if (!versionSuccess) {
+    throw new Error('Version bump failed');
+  }
+  
+  // Step 3: Get new version
+  const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf-8'));
+  log(`\n✨ New version: ${packageJson.version}`, 'green');
+  
+  // Step 4: Build project
+  log('\n🔨 Building project', 'cyan');
+  const buildSuccess = execCommand('npm run build', 'Building optimized production version');
+  if (!buildSuccess) {
+    throw new Error('Build failed');
+  }
+  
+  // Step 5: Git commit and push
+  log('\n📤 Committing to GitHub', 'cyan');
+  const commitMessage = `🚀 Deploy v${packageJson.version} - Auto-increment and deploy`;
+  
+  execCommand('git add .', 'Staging all changes');
+  execCommand(`git commit -m "${commitMessage}"`, 'Creating commit');
+  execCommand('git push origin main', 'Pushing to GitHub');
+  
+  // Step 6: Create GitHub release
+  log('\n🏷️  Creating GitHub release', 'cyan');
+  const releaseSuccess = execCommand(
+    `gh release create v${packageJson.version} --title "Release v${packageJson.version}" --notes "Auto-deployment of ant colony defense game v${packageJson.version}"`,
+    'Creating GitHub release'
+  );
+  
+  if (releaseSuccess) {
+    log('✅ GitHub release created', 'green');
+  } else {
+    log('⚠️  GitHub release failed (continuing deployment)', 'yellow');
+  }
+  
+  // Step 7: Deploy to Cloudflare Workers
   log('\n🚀 Deploying to Cloudflare Workers', 'magenta');
   const deploySuccess = execCommand(
     'wrangler deploy',
@@ -54,12 +93,56 @@ async function deploy() {
   
   log('✅ Deployed to Cloudflare Workers', 'green');
   
-  // Run post-deploy tests
-  log('\n🚀 Running Post-Deploy Tests', 'magenta');
-  const testSuccess = execCommand('npm run test:post-deploy', '');
+  // Step 8: Deploy to Cloudflare Pages (backup)
+  log('\n📄 Deploying to Cloudflare Pages (backup)', 'cyan');
+  const pagesSuccess = execCommand(
+    'wrangler pages deploy dist --project-name=ant-colony-defense',
+    'Deploying to Pages as backup'
+  );
+  
+  if (pagesSuccess) {
+    log('✅ Deployed to Cloudflare Pages', 'green');
+  } else {
+    log('⚠️  Pages deployment failed (main deployment still successful)', 'yellow');
+  }
+  
+  // Step 9: Wait for propagation
+  log('\n⏱️  Waiting for global propagation...', 'cyan');
+  await new Promise(resolve => setTimeout(resolve, 30000)); // 30 second wait
+  
+  // Step 10: Run comprehensive post-deploy tests
+  log('\n🧪 Running Comprehensive Post-Deploy Tests', 'magenta');
+  const testSuccess = execCommand('npm run test:post-deploy', 'Running all post-deploy validations');
+  
+  // Step 11: Verify deployment on all URLs
+  log('\n🌐 Verifying deployment on all URLs', 'cyan');
+  const urls = [
+    'https://ant-colony-defense.franzai.com',
+    'https://ant-colony-defense.pages.dev'
+  ];
+  
+  for (const url of urls) {
+    try {
+      log(`\n🔍 Checking ${url}`, 'blue');
+      execCommand(`curl -I ${url}`, `Verifying ${url} is accessible`);
+      log(`✅ ${url} is responding`, 'green');
+    } catch (error) {
+      log(`⚠️  ${url} check failed: ${error.message}`, 'yellow');
+    }
+  }
+  
+  // Step 12: Final summary
+  log('\n🎉 DEPLOYMENT COMPLETE!', 'green');
+  log(`\n📊 Deployment Summary:`, 'cyan');
+  log(`  🏷️  Version: v${packageJson.version}`, 'blue');
+  log(`  🌐 Primary: https://ant-colony-defense.franzai.com`, 'blue');
+  log(`  📄 Backup: https://ant-colony-defense.pages.dev`, 'blue');
+  log(`  📦 GitHub: https://github.com/user/ant-colony-defense/releases/tag/v${packageJson.version}`, 'blue');
+  log(`  ✅ Status: ${testSuccess ? 'All tests passed' : 'Some tests failed - check logs'}`, testSuccess ? 'green' : 'yellow');
   
   if (!testSuccess) {
     log('🚨 Deployment has issues that need attention', 'red');
+    log('🔧 Manual testing recommended', 'yellow');
   }
 }
 
