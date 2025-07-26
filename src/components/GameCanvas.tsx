@@ -313,6 +313,9 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
         })
         
         // Draw ants
+        if (gameState.ants.size > 0) {
+          console.log('Drawing', gameState.ants.size, 'ants')
+        }
         gameState.ants.forEach(ant => {
           const pixel = hexToPixel(ant.position, center)
           const stats = ANT_STATS[ant.type]

@@ -77,6 +77,7 @@ export default function WaveManager({
     setWaveStartTime(Date.now())
     actions.setPhase(GamePhase.WAVE)
     soundManager.playWaveStart()
+    console.log('Starting wave', gameState.currentWave + 1, 'with', antsArray.length, 'ants to spawn')
   }, [gameState.currentWave, level.waves, actions])
   
   // Start first wave immediately when game begins
@@ -90,39 +91,50 @@ export default function WaveManager({
   // Spawn ants during wave
   useEffect(() => {
     if (gameState.phase !== GamePhase.WAVE || antsToSpawn.length === 0 || gameState.isPaused) {
+      if (gameState.phase === GamePhase.WAVE && antsToSpawn.length === 0) {
+        console.log('No ants to spawn in wave phase')
+      }
       return
     }
     
+    console.log('Setting up spawn interval, ants to spawn:', antsToSpawn.length)
+    
     const spawnInterval = setInterval(() => {
-      if (antsToSpawn.length > 0) {
-        const nextAnt = antsToSpawn[0]
-        setAntsToSpawn(prev => prev.slice(1))
+      setAntsToSpawn(prev => {
+        console.log('Spawn interval tick, remaining:', prev.length)
+        if (prev.length > 0) {
+          const nextAnt = prev[0]
         
-        const wave = level.waves[gameState.currentWave]
-        const spawnGate = wave.spawnGates[nextAnt.gate] || level.spawnGates[nextAnt.gate]
-        
-        const ant = {
-          id: `ant-${Date.now()}-${Math.random()}`,
-          type: nextAnt.type,
-          position: { ...spawnGate },
-          targetPosition: level.corePosition,
-          hp: ANT_STATS[nextAnt.type].hp,
-          maxHp: ANT_STATS[nextAnt.type].maxHp,
-          speed: ANT_STATS[nextAnt.type].speed,
-          damage: ANT_STATS[nextAnt.type].damage,
-          armor: ANT_STATS[nextAnt.type].armor,
-          pheromoneStrength: 10,
-          carryingFood: false,
-          path: [],
-          animationProgress: 0
+          const wave = level.waves[gameState.currentWave]
+          const spawnGate = wave.spawnGates[nextAnt.gate] || level.spawnGates[nextAnt.gate]
+          
+          const ant = {
+            id: `ant-${Date.now()}-${Math.random()}`,
+            type: nextAnt.type,
+            position: { ...spawnGate },
+            targetPosition: level.corePosition,
+            hp: ANT_STATS[nextAnt.type].hp,
+            maxHp: ANT_STATS[nextAnt.type].maxHp,
+            speed: ANT_STATS[nextAnt.type].speed,
+            damage: ANT_STATS[nextAnt.type].damage,
+            armor: ANT_STATS[nextAnt.type].armor,
+            pheromoneStrength: 10,
+            carryingFood: false,
+            path: [],
+            animationProgress: 0
+          }
+          
+          actions.addAnt(ant)
+          console.log('Spawned ant:', ant.id, 'at position:', ant.position, 'total ants:', gameState.ants.size + 1)
+          
+          return prev.slice(1) // Return the updated array
         }
-        
-        actions.addAnt(ant)
-      }
+        return prev // Return unchanged if no ants to spawn
+      })
     }, GAME_CONFIG.ANT_SPAWN_INTERVAL / gameState.gameSpeed)
     
     return () => clearInterval(spawnInterval)
-  }, [gameState.phase, antsToSpawn, gameState.isPaused, gameState.gameSpeed, gameState.currentWave, level, actions])
+  }, [gameState.phase, antsToSpawn, gameState.isPaused, gameState.gameSpeed, gameState.currentWave, level, actions, gameState.ants.size])
   
   // Update ant paths and movement
   useEffect(() => {
