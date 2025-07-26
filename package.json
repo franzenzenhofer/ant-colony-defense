@@ -1,7 +1,7 @@
 {
   "name": "ant-colony-defense",
   "private": true,
-  "version": "1.6.0",
+  "version": "1.7.0",
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev-and-deploy.js",
@@ -18,7 +18,7 @@
     "test:e2e:full": "playwright test tests/full-game-play.spec.ts",
     "test:e2e:ui": "playwright test --ui",
     "test:screenshot": "node scripts/capture-screenshots.js",
-    "test:post-deploy": "node scripts/post-deploy-tests.js",
+    "test:post-deploy": "node scripts/post-deploy-tests.js && node scripts/post-deploy-e2e.js",
     "deploy": "node scripts/deploy-complete.js",
     "predeploy": "npm run version:bump:minor && npm run build",
     "deploy:major": "npm run version:bump:major && npm run build && npm run deploy",

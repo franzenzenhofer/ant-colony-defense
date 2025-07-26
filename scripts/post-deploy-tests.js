@@ -34,6 +34,13 @@ const tests = [
     }
   },
   {
+    name: 'Mobile E2E Gameplay Test',
+    run: async () => {
+      // This will be handled by Playwright in post-deploy
+      console.log('Mobile E2E test will run via Playwright');
+    }
+  },
+  {
     name: 'Static Assets Loading',
     run: async () => {
       const response = await fetch(SITE_URL);
