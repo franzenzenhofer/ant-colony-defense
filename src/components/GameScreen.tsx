@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { LevelConfig, GameState, GamePhase, TowerType, HexCoordinate } from '../types'
+import { LevelConfig, GameState, GamePhase, TowerType, HexCoordinate, Ant, Tower, Pheromone } from '../types'
 import { Pause, Play, FastForward, Home, Heart, Coins, Shield } from 'lucide-react'
 import GameCanvas from './GameCanvas'
 import TowerSelector from './TowerSelector'
