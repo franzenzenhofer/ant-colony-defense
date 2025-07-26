@@ -1,0 +1,336 @@
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* Ant colony theme colors */
+  --color-earth-dark: #2C1810;
+  --color-earth: #3E2723;
+  --color-earth-light: #5D4037;
+  --color-sand: #8B4513;
+  --color-sand-light: #D2691E;
+  --color-accent: #FFD700;
+  --color-danger: #DC143C;
+  --color-success: #32CD32;
+  --color-text: #FFFFFF;
+  --color-text-dim: #CCCCCC;
+
+  color: var(--color-text);
+  background-color: var(--color-earth-dark);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Game specific styles */
+.game-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-earth-dark);
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: var(--color-earth);
+  border-bottom: 2px solid var(--color-earth-light);
+  min-height: 60px;
+}
+
+.game-canvas {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--color-earth-dark);
+}
+
+.game-controls {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--color-earth);
+  border-top: 2px solid var(--color-earth-light);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Button styles */
+button {
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  background: var(--color-sand);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+}
+
+button:hover:not(:disabled) {
+  background: var(--color-sand-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--color-accent);
+  color: var(--color-earth-dark);
+}
+
+button.danger {
+  background: var(--color-danger);
+}
+
+button.success {
+  background: var(--color-success);
+}
+
+/* Tower selection */
+.tower-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  min-width: 80px;
+}
+
+.tower-button.selected {
+  background: var(--color-sand-light);
+  outline: 2px solid var(--color-accent);
+}
+
+/* Resource display */
+.resource-display {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.resource-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Wave indicator */
+.wave-indicator {
+  background: var(--color-earth-light);
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-weight: 600;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: var(--color-earth);
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--color-earth-light);
+}
+
+/* Menu styles */
+.menu-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-earth-dark);
+  padding: 2rem;
+}
+
+.menu-title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--color-accent);
+  text-align: center;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.menu-subtitle {
+  font-size: 1.2rem;
+  color: var(--color-text-dim);
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Level select */
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.level-card {
+  background: var(--color-earth);
+  border: 2px solid var(--color-earth-light);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.level-card:hover {
+  background: var(--color-earth-light);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.level-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.level-card.completed {
+  border-color: var(--color-success);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .game-header {
+    padding: 0.5rem;
+    min-height: 50px;
+  }
+  
+  .resource-display {
+    font-size: 1rem;
+  }
+  
+  .menu-title {
+    font-size: 2rem;
+  }
+  
+  .menu-subtitle {
+    font-size: 1rem;
+  }
+  
+  button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .tower-button {
+    min-width: 70px;
+    padding: 0.4rem;
+  }
+}
+
+/* Loading spinner */
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--color-earth-light);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Toast notifications */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-earth);
+  color: var(--color-text);
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 2000;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translate(-50%, 100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
