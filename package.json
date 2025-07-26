@@ -4,8 +4,7 @@
   "version": "1.6.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "postdev": "npm run test:post-deploy",
+    "dev": "node scripts/dev-and-deploy.js",
     "build": "vite build && npm run build:worker",
     "prebuild": "npm run lint && npm run typecheck",
     "build:worker": "echo 'Worker uses static assets from dist/'",
