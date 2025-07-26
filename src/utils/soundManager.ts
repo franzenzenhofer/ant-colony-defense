@@ -202,6 +202,86 @@ export class SoundManager {
   public isEnabled(): boolean {
     return this.config.enabled
   }
+  
+  public playCoreDamage(): void {
+    if (!this.config.enabled) return
+    
+    const ctx = this.getAudioContext()
+    const oscillator = ctx.createOscillator()
+    const gainNode = ctx.createGain()
+    
+    oscillator.type = 'triangle'
+    oscillator.frequency.setValueAtTime(100, ctx.currentTime)
+    oscillator.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.2)
+    gainNode.gain.setValueAtTime(0.5 * this.config.volume, ctx.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2)
+    
+    oscillator.connect(gainNode)
+    gainNode.connect(ctx.destination)
+    
+    oscillator.start(ctx.currentTime)
+    oscillator.stop(ctx.currentTime + 0.2)
+  }
+  
+  public playAntDefeat(): void {
+    if (!this.config.enabled) return
+    
+    const ctx = this.getAudioContext()
+    const oscillator = ctx.createOscillator()
+    const gainNode = ctx.createGain()
+    
+    oscillator.type = 'sine'
+    oscillator.frequency.setValueAtTime(800, ctx.currentTime)
+    oscillator.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.1)
+    gainNode.gain.setValueAtTime(0.2 * this.config.volume, ctx.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1)
+    
+    oscillator.connect(gainNode)
+    gainNode.connect(ctx.destination)
+    
+    oscillator.start(ctx.currentTime)
+    oscillator.stop(ctx.currentTime + 0.1)
+  }
+  
+  public playTowerAttack(towerType: string): void {
+    if (!this.config.enabled) return
+    
+    const ctx = this.getAudioContext()
+    const oscillator = ctx.createOscillator()
+    const gainNode = ctx.createGain()
+    
+    // Different sounds for different tower types
+    switch (towerType) {
+      case 'ANTEATER':
+        oscillator.type = 'square'
+        oscillator.frequency.value = 300
+        break
+      case 'PESTICIDE':
+        oscillator.type = 'sawtooth'
+        oscillator.frequency.value = 500
+        break
+      case 'SUGAR_TRAP':
+        oscillator.type = 'sine'
+        oscillator.frequency.value = 600
+        break
+      case 'FIRE':
+        oscillator.type = 'triangle'
+        oscillator.frequency.value = 200
+        break
+      default:
+        oscillator.type = 'square'
+        oscillator.frequency.value = 440
+    }
+    
+    gainNode.gain.setValueAtTime(0.15 * this.config.volume, ctx.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05)
+    
+    oscillator.connect(gainNode)
+    gainNode.connect(ctx.destination)
+    
+    oscillator.start(ctx.currentTime)
+    oscillator.stop(ctx.currentTime + 0.05)
+  }
 }
 
 // Global sound manager instance

@@ -1,7 +1,7 @@
 {
   "name": "ant-colony-defense",
   "private": true,
-  "version": "1.12.1",
+  "version": "1.13.1",
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev-and-deploy.js",
@@ -21,6 +21,7 @@
     "test:post-deploy": "node scripts/post-deploy-tests.js && node scripts/post-deploy-e2e.js",
     "deploy": "node scripts/deploy-complete.js",
     "predeploy": "npm run version:bump:minor && npm run build",
+    "postdeploy": "node scripts/verify-deployment.js",
     "deploy:major": "npm run version:bump:major && npm run build && npm run deploy",
     "deploy:minor": "npm run version:bump:minor && npm run build && npm run deploy",
     "deploy:patch": "npm run version:bump:patch && npm run build && npm run deploy",

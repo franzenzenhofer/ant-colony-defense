@@ -50,7 +50,36 @@ export default function WaveManager({
     maxIterations: 10
   }))
   
-  // Start wave when build phase ends
+  // Define startWave BEFORE using it in effects
+  const startWave = useCallback((): void => {
+    if (gameState.currentWave >= level.waves.length) {
+      return
+    }
+    
+    const wave = level.waves[gameState.currentWave]
+    const antsArray: Array<{ type: AntType; gate: number }> = []
+    
+    // Build spawn queue
+    Object.entries(wave.antCounts).forEach(([type, count]) => {
+      for (let i = 0; i < count; i++) {
+        const gateIndex = Math.floor(Math.random() * wave.spawnGates.length)
+        antsArray.push({ type: type as AntType, gate: gateIndex })
+      }
+    })
+    
+    // Shuffle for variety
+    for (let i = antsArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [antsArray[i], antsArray[j]] = [antsArray[j], antsArray[i]]
+    }
+    
+    setAntsToSpawn(antsArray)
+    setWaveStartTime(Date.now())
+    actions.setPhase(GamePhase.WAVE)
+    soundManager.playWaveStart()
+  }, [gameState.currentWave, level.waves, actions])
+  
+  // Start wave when build phase ends - NOW startWave is defined
   useEffect(() => {
     if (gameState.phase === GamePhase.BUILD && gameState.currentWave === 0) {
       // Auto-start first wave after delay
@@ -118,9 +147,9 @@ export default function WaveManager({
         if (ant.path.length === 0) {
           const path = acoRef.current.findPath(
             ant.position,
-            level.corePosition,
+            ant.targetPosition ?? level.corePosition,
             obstacles,
-            level.gridRadius
+            gameState.pheromones
           )
           
           if (path.length > 0) {
@@ -128,48 +157,56 @@ export default function WaveManager({
           }
         }
         
-        // Move ant along path
-        if (ant.path.length > 0 && ant.animationProgress >= 1) {
-          const nextPosition = ant.path[0]
-          actions.updateAnt(ant.id, {
-            position: nextPosition,
-            path: ant.path.slice(1),
-            animationProgress: 0
-          })
+        // Move along path
+        if (ant.path.length > 0) {
+          const progress = ant.animationProgress + (ant.speed * GAME_CONFIG.ANT_SPEED_MULTIPLIER * gameState.gameSpeed)
           
-          // Add pheromone
-          actions.addPheromone({
-            position: ant.position,
-            strength: ant.pheromoneStrength,
-            type: 'PATH',
-            decayRate: 0.05
-          })
-          
-          // Check if reached core
-          if (nextPosition.q === level.corePosition.q && 
-              nextPosition.r === level.corePosition.r) {
-            actions.setCoreHealth(gameState.coreHealth - ant.damage)
-            actions.removeAnt(ant.id)
+          if (progress >= 1) {
+            // Reached next hex
+            const nextPosition = ant.path[0]
+            const remainingPath = ant.path.slice(1)
+            
+            // Deposit pheromone
+            const pheromoneKey = hexToKey(ant.position)
+            const existingPheromone = gameState.pheromones.get(pheromoneKey)
+            
+            if (existingPheromone) {
+              actions.updatePheromone(ant.position, {
+                strength: Math.min(100, existingPheromone.strength + ant.pheromoneStrength)
+              })
+            } else {
+              actions.addPheromone({
+                position: ant.position,
+                strength: ant.pheromoneStrength,
+                type: 'PATH',
+                decayRate: GAME_CONFIG.PHEROMONE_DECAY_RATE
+              })
+            }
+            
+            // Check if reached core
+            if (nextPosition.q === level.corePosition.q && nextPosition.r === level.corePosition.r) {
+              // Damage core
+              actions.setCoreHealth(Math.max(0, gameState.coreHealth - ant.damage))
+              actions.removeAnt(ant.id)
+              soundManager.playCoreDamage()
+            } else {
+              // Continue to next position
+              actions.updateAnt(ant.id, {
+                position: nextPosition,
+                path: remainingPath,
+                animationProgress: progress - 1
+              })
+            }
+          } else {
+            // Still moving
+            actions.updateAnt(ant.id, { animationProgress: progress })
           }
-        } else if (ant.path.length > 0) {
-          // Update animation progress
-          actions.updateAnt(ant.id, {
-            animationProgress: Math.min(1, ant.animationProgress + 0.1 * ant.speed * gameState.gameSpeed)
-          })
         }
       })
-      
-      // Decay pheromones
-      actions.decayPheromones()
-      
-      // Check wave completion
-      if (antsToSpawn.length === 0 && gameState.ants.size === 0) {
-        endWave()
-      }
-    }, 100 / gameState.gameSpeed)
+    }, GAME_CONFIG.GAME_UPDATE_INTERVAL / gameState.gameSpeed)
     
     return () => clearInterval(moveInterval)
-  }, [gameState, level, actions, antsToSpawn.length, endWave])
+  }, [gameState, level.corePosition, actions])
   
   // Tower attacks
   useEffect(() => {
@@ -180,104 +217,59 @@ export default function WaveManager({
     const attackInterval = setInterval(() => {
       gameState.towers.forEach(tower => {
         const towerStats = TOWER_STATS[tower.type]
-        const now = Date.now()
+        const currentTime = Date.now()
         
-        if (now - tower.lastAttackTime < (1000 / towerStats.attackSpeed) / gameState.gameSpeed) {
+        // Check if tower can attack
+        if (currentTime - tower.lastAttackTime < towerStats.attackSpeed * 1000 / gameState.gameSpeed) {
           return
         }
         
         // Find targets in range
         const targetsInRange: string[] = []
         gameState.ants.forEach(ant => {
-          const distance = Math.sqrt(
-            Math.pow(ant.position.q - tower.position.q, 2) +
-            Math.pow(ant.position.r - tower.position.r, 2)
-          )
+          const dx = ant.position.q - tower.position.q
+          const dy = ant.position.r - tower.position.r
+          const distance = Math.sqrt(dx * dx + dy * dy)
           
           if (distance <= towerStats.range) {
             targetsInRange.push(ant.id)
           }
         })
         
+        // Attack first target
         if (targetsInRange.length > 0) {
-          // Attack first target (or all for AOE)
-          if (towerStats.special.aoe) {
-            // AOE damage
-            targetsInRange.forEach(antId => {
-              const ant = gameState.ants.get(antId)
-              if (ant) {
-                const damage = Math.max(0, towerStats.damage - ant.armor)
-                actions.updateAnt(antId, { hp: ant.hp - damage })
-                
-                if (ant.hp - damage <= 0) {
-                  actions.removeAnt(antId)
-                  actions.setResources(gameState.resources + ANT_STATS[ant.type].reward)
-                  actions.updateScore(gameState.score + ANT_STATS[ant.type].reward * 10)
-                  soundManager.playAntDeath()
-                }
-              }
-            })
-          } else {
-            // Single target
-            const targetAnt = gameState.ants.get(targetsInRange[0])
-            if (targetAnt) {
-              const damage = Math.max(0, towerStats.damage - targetAnt.armor)
-              actions.updateAnt(targetsInRange[0], { hp: targetAnt.hp - damage })
+          const targetId = targetsInRange[0]
+          const target = gameState.ants.get(targetId)
+          
+          if (target) {
+            const damage = towerStats.damage - target.armor
+            const newHp = target.hp - damage
+            
+            if (newHp <= 0) {
+              // Ant defeated
+              actions.removeAnt(targetId)
+              actions.setResources(gameState.resources + ANT_STATS[target.type].reward)
+              actions.updateScore(gameState.score + ANT_STATS[target.type].reward * 10)
+              soundManager.playAntDefeat()
+            } else {
+              // Damage ant
+              actions.updateAnt(targetId, { hp: newHp })
               
               // Apply special effects
-              if (towerStats.special.slow && targetAnt.speed > 0.5) {
-                actions.updateAnt(targetsInRange[0], { 
-                  speed: targetAnt.speed * towerStats.special.slow 
-                })
-              }
-              
-              if (targetAnt.hp - damage <= 0) {
-                actions.removeAnt(targetsInRange[0])
-                actions.setResources(gameState.resources + ANT_STATS[targetAnt.type].reward)
-                actions.updateScore(gameState.score + ANT_STATS[targetAnt.type].reward * 10)
-                soundManager.playAntDeath()
-              } else if (damage > 0) {
-                soundManager.playAntHurt()
+              if (towerStats.special.slow && target.speed > 0.5) {
+                actions.updateAnt(targetId, { speed: target.speed * (1 - towerStats.special.slow) })
               }
             }
+            
+            actions.updateTower(tower.id, { lastAttackTime: currentTime })
+            soundManager.playTowerAttack(tower.type)
           }
-          
-          actions.updateTower(tower.id, { lastAttackTime: now })
-          soundManager.playTowerShoot()
         }
       })
-    }, 100 / gameState.gameSpeed)
+    }, GAME_CONFIG.ATTACK_CHECK_INTERVAL / gameState.gameSpeed)
     
     return () => clearInterval(attackInterval)
   }, [gameState, actions])
-  
-  const startWave = useCallback((): void => {
-    if (gameState.currentWave >= level.waves.length) {
-      return
-    }
-    
-    const wave = level.waves[gameState.currentWave]
-    const antsArray: Array<{ type: AntType; gate: number }> = []
-    
-    // Build spawn queue
-    Object.entries(wave.antCounts).forEach(([type, count]) => {
-      for (let i = 0; i < count; i++) {
-        const gateIndex = Math.floor(Math.random() * wave.spawnGates.length)
-        antsArray.push({ type: type as AntType, gate: gateIndex })
-      }
-    })
-    
-    // Shuffle for variety
-    for (let i = antsArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [antsArray[i], antsArray[j]] = [antsArray[j], antsArray[i]]
-    }
-    
-    setAntsToSpawn(antsArray)
-    setWaveStartTime(Date.now())
-    actions.setPhase(GamePhase.WAVE)
-    soundManager.playWaveStart()
-  }, [gameState.currentWave, level.waves, actions])
   
   const endWave = useCallback((): void => {
     if (gameState.currentWave >= level.waves.length - 1) {
@@ -298,35 +290,88 @@ export default function WaveManager({
     }
   }, [gameState.phase, startWave])
   
+  // Check wave completion
+  useEffect(() => {
+    if (gameState.phase === GamePhase.WAVE && 
+        gameState.ants.size === 0 && 
+        antsToSpawn.length === 0) {
+      // Wave complete
+      endWave()
+    }
+  }, [gameState.phase, gameState.ants.size, antsToSpawn.length, endWave])
+  
+  // Pheromone decay
+  useEffect(() => {
+    if (gameState.isPaused) {
+      return
+    }
+    
+    const decayInterval = setInterval(() => {
+      actions.decayPheromones()
+    }, GAME_CONFIG.PHEROMONE_UPDATE_INTERVAL)
+    
+    return () => clearInterval(decayInterval)
+  }, [gameState.isPaused, actions])
+  
   return (
-    <div style={{ 
-      position: 'absolute', 
-      bottom: '4rem', 
-      left: '50%', 
-      transform: 'translateX(-50%)',
-      background: 'var(--color-earth)',
-      padding: '1rem 2rem',
-      borderRadius: '0.5rem',
-      border: '2px solid var(--color-earth-light)',
-      textAlign: 'center'
-    }}>
-      {gameState.phase === GamePhase.BUILD ? (
-        <>
-          <p style={{ marginBottom: '0.5rem' }}>Build Phase</p>
-          <button className="primary" onClick={() => {
-            soundManager.playButtonClick()
-            skipBuildPhase()
-          }}>
-            Start Wave {gameState.currentWave + 1}
-          </button>
-        </>
-      ) : (
-        <>
-          <p>Wave {gameState.currentWave + 1} in Progress</p>
-          <p style={{ fontSize: '0.9rem', color: 'var(--color-text-dim)' }}>
-            Ants remaining: {antsToSpawn.length + gameState.ants.size}
-          </p>
-        </>
+    <div className="wave-controls">
+      {gameState.phase === GamePhase.BUILD && (
+        <button 
+          className="primary"
+          onClick={skipBuildPhase}
+          style={{ 
+            position: 'absolute',
+            bottom: '120px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '1rem 2rem',
+            fontSize: '1.2rem'
+          }}
+        >
+          Start Wave {gameState.currentWave + 1}
+        </button>
+      )}
+      
+      {gameState.phase === GamePhase.WAVE && (
+        <div style={{
+          position: 'absolute',
+          bottom: '120px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'var(--color-bg-secondary)',
+          padding: '1rem',
+          borderRadius: '8px',
+          border: '2px solid var(--color-border)'
+        }}>
+          <p>Wave {gameState.currentWave + 1} in progress...</p>
+          <p>Ants remaining: {gameState.ants.size + antsToSpawn.length}</p>
+        </div>
+      )}
+      
+      {gameState.phase === GamePhase.VICTORY && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h1>Victory!</h1>
+            <p>You have successfully defended your colony!</p>
+            <p>Score: {gameState.score}</p>
+            <button className="primary" onClick={onLevelComplete}>
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {gameState.phase === GamePhase.DEFEAT && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h1>Defeat</h1>
+            <p>The ants have overwhelmed your defenses!</p>
+            <p>Score: {gameState.score}</p>
+            <button onClick={() => window.location.reload()}>
+              Retry
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

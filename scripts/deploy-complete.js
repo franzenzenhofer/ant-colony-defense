@@ -109,7 +109,16 @@ async function deploy() {
     log('⚠️  GitHub release failed (continuing deployment)', 'yellow');
   }
   
-  // Step 7: Deploy to Cloudflare Workers
+  // Step 7: Copy worker file to dist
+  log('\n📋 Preparing deployment files', 'cyan');
+  try {
+    fs.copyFileSync(path.join(__dirname, '..', '_worker.js'), path.join(__dirname, '..', 'dist', '_worker.js'));
+    log('✅ Copied _worker.js to dist/', 'green');
+  } catch (error) {
+    log('⚠️  Failed to copy _worker.js (may not exist)', 'yellow');
+  }
+  
+  // Step 8: Deploy to Cloudflare Workers
   log('\n🚀 Deploying to Cloudflare Workers', 'magenta');
   const deploySuccess = execCommand(
     'wrangler deploy',
@@ -122,7 +131,7 @@ async function deploy() {
   
   log('✅ Deployed to Cloudflare Workers', 'green');
   
-  // Step 8: Deploy to Cloudflare Pages (backup)
+  // Step 9: Deploy to Cloudflare Pages (backup)
   log('\n📄 Deploying to Cloudflare Pages (backup)', 'cyan');
   const pagesSuccess = execCommand(
     'wrangler pages deploy dist --project-name=ant-colony-defense',
@@ -135,15 +144,15 @@ async function deploy() {
     log('⚠️  Pages deployment failed (main deployment still successful)', 'yellow');
   }
   
-  // Step 9: Wait for propagation
+  // Step 10: Wait for propagation
   log('\n⏱️  Waiting for global propagation...', 'cyan');
   await new Promise(resolve => setTimeout(resolve, 30000)); // 30 second wait
   
-  // Step 10: Run comprehensive post-deploy tests
+  // Step 11: Run comprehensive post-deploy tests
   log('\n🧪 Running Comprehensive Post-Deploy Tests', 'magenta');
   const testSuccess = execCommand('npm run test:post-deploy', 'Running all post-deploy validations');
   
-  // Step 11: Verify deployment on all URLs
+  // Step 12: Verify deployment on all URLs
   log('\n🌐 Verifying deployment on all URLs', 'cyan');
   const urls = [
     'https://ant-colony-defense.franzai.com',
@@ -160,7 +169,7 @@ async function deploy() {
     }
   }
   
-  // Step 12: Final summary
+  // Step 13: Final summary
   log('\n🎉 DEPLOYMENT COMPLETE!', 'green');
   log(`\n📊 Deployment Summary:`, 'cyan');
   log(`  🏷️  Version: v${packageJson.version}`, 'blue');
@@ -172,6 +181,20 @@ async function deploy() {
   if (!testSuccess) {
     log('🚨 Deployment has issues that need attention', 'red');
     log('🔧 Manual testing recommended', 'yellow');
+  }
+  
+  // CRITICAL: Verify deployment on franzai.com
+  log('\n🔍 VERIFYING DEPLOYMENT ON FRANZAI.COM...', 'cyan');
+  const verifySuccess = execCommand('node scripts/verify-deployment.js', 'Deployment verification');
+  
+  if (!verifySuccess) {
+    log('\n❌ DEPLOYMENT VERIFICATION FAILED!', 'red');
+    log('❌ The game is NOT working on https://ant-colony-defense.franzai.com', 'red');
+    log('❌ DO NOT claim deployment success!', 'red');
+    process.exit(1);
+  } else {
+    log('\n✅ DEPLOYMENT FULLY VERIFIED!', 'green');
+    log('✅ Game is LIVE and WORKING on franzai.com!', 'green');
   }
 }
 
