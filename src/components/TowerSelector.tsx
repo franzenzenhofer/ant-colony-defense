@@ -29,19 +29,37 @@ export default function TowerSelector({
           >
             <span style={{ fontSize: '1.5rem' }}>{stats.icon}</span>
             <span style={{ fontWeight: 'bold' }}>{stats.name}</span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-dim)' }}>
+            <span style={{ 
+              fontSize: '0.8rem', 
+              color: canAfford ? 'var(--color-text-dim)' : 'var(--color-danger)',
+              fontWeight: canAfford ? 'normal' : 'bold'
+            }}>
               💰 {stats.cost}
             </span>
             {!canAfford && (
-              <span style={{ 
-                position: 'absolute', 
-                top: 0, 
-                right: 0, 
-                bottom: 0, 
-                left: 0, 
-                background: 'rgba(0,0,0,0.5)',
-                borderRadius: '0.5rem'
-              }} />
+              <>
+                <span style={{ 
+                  position: 'absolute', 
+                  top: 0, 
+                  right: 0, 
+                  bottom: 0, 
+                  left: 0, 
+                  background: 'rgba(0,0,0,0.6)',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <span style={{
+                    color: 'var(--color-danger)',
+                    fontWeight: 'bold',
+                    fontSize: '0.9rem',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+                  }}>
+                    Need {stats.cost - resources} more
+                  </span>
+                </span>
+              </>
             )}
           </button>
         )

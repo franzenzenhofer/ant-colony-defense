@@ -264,33 +264,78 @@ button.success {
   border-color: var(--color-success);
 }
 
-/* Responsive design */
+/* Mobile-first responsive design */
 @media (max-width: 768px) {
   .game-header {
     padding: 0.5rem;
-    min-height: 50px;
+    min-height: 60px;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
   
   .resource-display {
     font-size: 1rem;
+    flex-wrap: wrap;
   }
   
   .menu-title {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
   
   .menu-subtitle {
     font-size: 1rem;
+    margin-bottom: 2rem;
   }
   
   button {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    min-height: 48px; /* Touch-friendly minimum */
   }
   
   .tower-button {
-    min-width: 70px;
-    padding: 0.4rem;
+    min-width: 90px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .tower-button span {
+    font-size: 2rem; /* Larger tower icons */
+  }
+  
+  .game-controls {
+    padding: 0.75rem;
+    gap: 0.75rem;
+    min-height: 80px;
+  }
+  
+  .modal-content {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .level-grid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+  
+  .level-card {
+    padding: 1.25rem;
+    min-height: 80px;
+  }
+  
+  /* Larger hit targets for mobile */
+  .tower-selector {
+    min-height: 60px;
+  }
+  
+  /* Better spacing for touch */
+  .menu-buttons {
+    gap: 1.25rem;
+  }
+  
+  .menu-buttons button {
+    min-height: 56px;
   }
 }
 

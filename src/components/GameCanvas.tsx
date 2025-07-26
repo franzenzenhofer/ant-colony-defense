@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useRef, useImperativeHandle } from 'react'
 import { LevelConfig, GameState, HexCoordinate } from '../types'
 import { hexToPixel, pixelToHex, drawHex, isValidHex } from '../utils/hexGrid'
 import { COLORS, ANT_STATS, TOWER_STATS } from '../core/constants'
+import { ParticleSystem } from '../utils/particles'
 
 interface GameCanvasProps {
   level: LevelConfig
@@ -15,23 +16,32 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
   ({ level, gameState, onHexClick, onHexRightClick, selectedHex }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const animationFrameRef = useRef<number>()
+    const particleSystemRef = useRef(new ParticleSystem())
+    const lastAntCountRef = useRef(gameState.ants.size)
     
     useImperativeHandle(ref, () => canvasRef.current!)
     
-    // Handle canvas clicks
+    // Handle canvas clicks and touch events
     useEffect(() => {
       const canvas = canvasRef.current
       if (!canvas) return
       
-      const handleClick = (e: MouseEvent): void => {
-        const rect = canvas.getBoundingClientRect()
-        const x = e.clientX - rect.left
-        const y = e.clientY - rect.top
+      let longPressTimer: ReturnType<typeof setTimeout> | null = null
+      let touchStartPos = { x: 0, y: 0 }
+      
+      const getCoordinates = (e: MouseEvent | Touch, rect: DOMRect) => {
+        return {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        }
+      }
+      
+      const handleInteraction = (x: number, y: number, isRightClick: boolean = false): void => {
         const center = { x: canvas.width / 2, y: canvas.height / 2 }
         const hex = pixelToHex({ x, y }, center)
         
         if (isValidHex(hex, level.gridRadius)) {
-          if (e.button === 2) {
+          if (isRightClick) {
             onHexRightClick(hex)
           } else {
             onHexClick(hex)
@@ -39,19 +49,88 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
         }
       }
       
-      const handleContextMenu = (e: MouseEvent): void => {
+      const handleClick = (e: MouseEvent): void => {
+        const rect = canvas.getBoundingClientRect()
+        const coords = getCoordinates(e, rect)
+        handleInteraction(coords.x, coords.y, e.button === 2)
+      }
+      
+      const handleTouchStart = (e: TouchEvent): void => {
+        if (e.touches.length === 1) {
+          const touch = e.touches[0]
+          const rect = canvas.getBoundingClientRect()
+          const coords = getCoordinates(touch, rect)
+          touchStartPos = coords
+          
+          // Start long press timer for right-click simulation
+          longPressTimer = setTimeout(() => {
+            // Vibrate if available
+            if ('vibrate' in navigator) {
+              navigator.vibrate(50)
+            }
+            handleInteraction(coords.x, coords.y, true)
+            longPressTimer = null
+          }, 500)
+        }
+      }
+      
+      const handleTouchEnd = (e: TouchEvent): void => {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer)
+          longPressTimer = null
+          
+          // If it was a quick tap, treat as normal click
+          if (e.changedTouches.length === 1) {
+            const touch = e.changedTouches[0]
+            const rect = canvas.getBoundingClientRect()
+            const coords = getCoordinates(touch, rect)
+            
+            // Check if finger didn't move much (tap vs drag)
+            const distance = Math.sqrt(
+              Math.pow(coords.x - touchStartPos.x, 2) + 
+              Math.pow(coords.y - touchStartPos.y, 2)
+            )
+            
+            if (distance < 10) {
+              handleInteraction(coords.x, coords.y, false)
+            }
+          }
+        }
+      }
+      
+      const handleTouchMove = (): void => {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer)
+          longPressTimer = null
+        }
+      }
+      
+      const handleContextMenu = (e: MouseEvent | TouchEvent): void => {
         e.preventDefault()
       }
       
+      // Mouse events
       canvas.addEventListener('click', handleClick)
       canvas.addEventListener('contextmenu', handleContextMenu)
       canvas.addEventListener('mousedown', (e) => {
         if (e.button === 2) handleClick(e)
       })
       
+      // Touch events
+      canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
+      canvas.addEventListener('touchend', handleTouchEnd, { passive: false })
+      canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
+      
       return () => {
         canvas.removeEventListener('click', handleClick)
         canvas.removeEventListener('contextmenu', handleContextMenu)
+        canvas.removeEventListener('touchstart', handleTouchStart)
+        canvas.removeEventListener('touchend', handleTouchEnd)
+        canvas.removeEventListener('touchmove', handleTouchMove)
+        
+        if (longPressTimer) {
+          clearTimeout(longPressTimer)
+        }
       }
     }, [level, onHexClick, onHexRightClick])
     
@@ -70,6 +149,15 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
       window.addEventListener('resize', handleResize)
       return () => window.removeEventListener('resize', handleResize)
     }, [])
+    
+    // Detect ant deaths for particle effects
+    useEffect(() => {
+      if (gameState.ants.size < lastAntCountRef.current) {
+        // An ant died - we should add particles
+        // Since we don't track which ant died, we'll handle this in the render loop
+      }
+      lastAntCountRef.current = gameState.ants.size
+    }, [gameState.ants.size])
     
     // Main render loop
     useEffect(() => {
@@ -191,20 +279,37 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
           const pixel = hexToPixel(ant.position, center)
           const stats = ANT_STATS[ant.type]
           
-          // Ant body
+          // Add hit particles when ant is damaged
+          if (ant.hp < ant.maxHp * 0.3) {
+            // Ant is badly damaged - add occasional particles
+            if (Math.random() < 0.1) {
+              particleSystemRef.current.addHitParticles(pixel.x, pixel.y)
+            }
+          }
+          
+          // Ant body with damage effect
+          const healthPercent = ant.hp / ant.maxHp
+          ctx.save()
+          
+          // Flash red when hit
+          if (healthPercent < 0.5) {
+            ctx.globalAlpha = 0.8 + Math.sin(Date.now() * 0.01) * 0.2
+          }
+          
           ctx.beginPath()
           ctx.arc(pixel.x, pixel.y, stats.size, 0, Math.PI * 2)
-          ctx.fillStyle = stats.color
+          ctx.fillStyle = healthPercent < 0.3 ? COLORS.UI.ERROR : stats.color
           ctx.fill()
           ctx.strokeStyle = COLORS.UI.TEXT_DARK
           ctx.lineWidth = 1
           ctx.stroke()
           
+          ctx.restore()
+          
           // Health bar
           if (ant.hp < ant.maxHp) {
             const barWidth = stats.size * 2
             const barHeight = 4
-            const healthPercent = ant.hp / ant.maxHp
             
             ctx.fillStyle = COLORS.UI.ERROR
             ctx.fillRect(pixel.x - barWidth / 2, pixel.y - stats.size - 8, barWidth, barHeight)
@@ -213,12 +318,25 @@ const GameCanvas = forwardRef<HTMLCanvasElement, GameCanvasProps>(
             ctx.fillRect(pixel.x - barWidth / 2, pixel.y - stats.size - 8, barWidth * healthPercent, barHeight)
           }
           
-          // Draw ant emoji
+          // Draw ant emoji - change based on health
           ctx.font = `${stats.size}px Arial`
           ctx.textAlign = 'center'
           ctx.textBaseline = 'middle'
-          ctx.fillText('🐜', pixel.x, pixel.y)
+          
+          // Different emoji based on health
+          let emoji = '🐜'
+          if (healthPercent < 0.3) {
+            emoji = '😵'
+          } else if (healthPercent < 0.6) {
+            emoji = '😰'
+          }
+          
+          ctx.fillText(emoji, pixel.x, pixel.y)
         })
+        
+        // Update and render particles
+        particleSystemRef.current.update()
+        particleSystemRef.current.render(ctx)
         
         // Request next frame
         animationFrameRef.current = requestAnimationFrame(render)
