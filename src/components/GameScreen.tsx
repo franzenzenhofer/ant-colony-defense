@@ -81,9 +81,10 @@ export default function GameScreen({
   }, [gameState.coreHealth, gameState.phase, actions])
   
   const handlePlaceTower = useCallback((hex: HexCoordinate): void => {
-    if (!gameState.selectedTowerType || gameState.phase !== GamePhase.BUILD) {
+    if (!gameState.selectedTowerType) {
       return
     }
+    // Allow tower placement during both BUILD and WAVE phases for real-time gameplay
     
     const towerStats = TOWER_STATS[gameState.selectedTowerType]
     if (gameState.resources < towerStats.cost) {
