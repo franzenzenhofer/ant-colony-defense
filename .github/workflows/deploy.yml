@@ -149,15 +149,15 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: 🌍 Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+      - name: 🌍 Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: ant-colony-defense
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          deploymentName: v${{ steps.version.outputs.NEW_VERSION }}
+          command: deploy
+          secrets: |
+            CLOUDFLARE_API_TOKEN
+            CLOUDFLARE_ACCOUNT_ID
 
       - name: 🏷️ Create GitHub Release
         uses: softprops/action-gh-release@v2
